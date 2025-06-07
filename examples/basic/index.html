@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLite3 IndexedDB VFS Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #output {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            min-height: 200px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>SQLite3 IndexedDB VFS Example</h1>
+    
+    <p>This example demonstrates how to use the SQLite3 IndexedDB VFS in a WebAssembly environment.</p>
+    
+    <button id="runButton">Run SQLite Example</button>
+    
+    <h2>Output:</h2>
+    <div id="output"></div>
+    
+    <h2>How it works:</h2>
+    <p>
+        This example uses the SQLite3 IndexedDB VFS to store a SQLite database in the browser's IndexedDB.
+        The database persists across browser sessions, so you can close and reopen the page and your data will still be there.
+    </p>
+    
+    <h3>Steps to run this example:</h3>
+    <ol>
+        <li>Compile the Go code to WebAssembly: <code>GOOS=js GOARCH=wasm go build -o main.wasm</code></li>
+        <li>Copy the WebAssembly support file: <code>cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" .</code></li>
+        <li>Serve this directory with a web server: <code>go run server.go</code></li>
+        <li>Open <a href="http://localhost:8080">http://localhost:8080</a> in your browser</li>
+    </ol>
+    
+    <script src="wasm_exec.js"></script>
+    <script>
+        // Set up the output div for logging
+        const output = document.getElementById('output');
+        const originalConsoleLog = console.log;
+        
+        console.log = function() {
+            const args = Array.from(arguments);
+            originalConsoleLog.apply(console, args);
+            
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+            ).join(' ');
+            
+            output.textContent += message + '\n';
+        };
+        
+        // Initialize the Go WASM runtime
+        const go = new Go();
+        
+        WebAssembly.instantiateStreaming(fetch('main.wasm'), go.importObject)
+            .then((result) => {
+                // Start the WASM instance
+                go.run(result.instance);
+                
+                // Set up the run button
+                document.getElementById('runButton').addEventListener('click', () => {
+                    output.textContent = ''; // Clear previous output
+                    console.log('Running SQLite example...');
+                    
+                    // Call the exported function from our Go code
+                    window.runSQLiteExample();
+                });
+                
+                console.log('WebAssembly loaded successfully. Click "Run SQLite Example" to start.');
+            })
+            .catch(err => {
+                console.error('Failed to load WebAssembly:', err);
+                output.textContent = 'Error: ' + err.message;
+            });
+    </script>
+</body>
+</html>
