@@ -8,7 +8,7 @@ import (
 import "database/sql"
 import _ "github.com/ncruces/go-sqlite3/driver"
 import _ "github.com/ncruces/go-sqlite3/embed"
-import _ "github.com/ozanturksever/sqlite3-vfs-idb"
+import _ "github.com/justwasm/sqlite3-vfs-idb"
 
 func main() {
 	// Set up a done channel to wait for the application to finish

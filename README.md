@@ -11,7 +11,7 @@ This implementation is similar to the [memdb](https://github.com/ncruces/go-sqli
 ## Installation
 
 ```bash
-go get github.com/ozanturksever/sqlite3-vfs-idb
+go get github.com/justwasm/sqlite3-vfs-idb
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ import (
 	"database/sql"
 	"log"
 
-	_ "github.com/ozanturksever/sqlite3-vfs-idb"
+	_ "github.com/justwasm/sqlite3-vfs-idb"
 	"github.com/ncruces/go-sqlite3"
 )
 

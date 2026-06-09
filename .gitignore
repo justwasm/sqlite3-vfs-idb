@@ -23,6 +23,7 @@ go.work
 .vscode/
 *.swp
 *.swo
+*.sum
 
 # OS-specific files
 .DS_Store
