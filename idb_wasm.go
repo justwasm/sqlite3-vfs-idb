@@ -16,7 +16,6 @@ import (
 func init() {
 	js.Global().Get("eval").Invoke(idbJS)
 	vfs.Register("idb", &idbVFS{})
-	slog.Info("Registered IndexedDB VFS for WASM environment")
 }
 
 var (
