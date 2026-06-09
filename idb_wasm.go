@@ -5,7 +5,7 @@ package idb
 import (
 	"bytes"
 	"io"
-	"log"
+	"log/slog"
 	"sync"
 	"syscall/js"
 
@@ -16,7 +16,7 @@ import (
 func init() {
 	js.Global().Get("eval").Invoke(idbJS)
 	vfs.Register("idb", &idbVFS{})
-	log.Println("Registered IndexedDB VFS for WASM environment")
+	slog.Info("Registered IndexedDB VFS for WASM environment")
 }
 
 var (
@@ -243,7 +243,7 @@ func (f *idbFile) Sync(flags vfs.SyncFlag) error {
 
 	_, err := f.call("putFile", f.name, jsData)
 	if err != nil {
-		log.Printf("Sync failed for %s: %v", f.name, err)
+		slog.Error("Sync failed", "name", f.name, "err", err)
 		return sqlite3.IOERR_FSYNC
 	}
 	return nil

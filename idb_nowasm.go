@@ -3,7 +3,7 @@
 package idb
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/ncruces/go-sqlite3/vfs"
 )
@@ -13,5 +13,5 @@ func init() {
 	// This ensures that the code compiles and runs outside of the browser,
 	// but without persistence.
 	vfs.Register("idb", vfs.Find("memdb"))
-	log.Println("Registered in-memory VFS for non-WASM environment")
+	slog.Info("Registered in-memory VFS for non-WASM environment")
 }
