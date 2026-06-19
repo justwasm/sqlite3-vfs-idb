@@ -27,24 +27,21 @@ const idbJS = `
 
   async function getFile(name) {
     await init();
-    // When a previous WASM instance exits abnormally in a different
-    // Worker, its pending readwrite transaction may not yet be aborted
-    // by the browser. Retry with short delays so the new readonly
-    // transaction sees committed data instead of a stale snapshot.
-    var delay = 50;
-    for (var attempt = 0; attempt < 4; attempt++) {
-      var result = await new Promise(function (resolve, reject) {
-        var tx = db.transaction([STORE_NAME], 'readonly');
-        var store = tx.objectStore(STORE_NAME);
-        var req = store.get(name);
-        req.onerror = function () { reject('Failed to retrieve file: ' + req.error); };
-        req.onsuccess = function () { resolve(req.result ? req.result.content : null); };
-      });
-      if (result !== null) return result;
-      if (attempt < 3) await new Promise(function (r) { setTimeout(r, delay); });
-      delay *= 2;
-    }
-    return null;
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(name);
+      request.onerror = (event) => {
+        reject('Failed to retrieve file: ' + request.error);
+      };
+      request.onsuccess = (event) => {
+        if (request.result) {
+          resolve(request.result.content);
+        } else {
+          resolve(null); // Not found
+        }
+      };
+    });
   }
 
   async function putFile(name, content) {
@@ -80,7 +77,7 @@ const idbJS = `
   globalThis.sqliteVFS = {
     getFile,
     putFile,
-    deleteFile,
+    deleteFile
   };
 })();
 `
