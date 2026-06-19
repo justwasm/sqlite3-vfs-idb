@@ -20,7 +20,8 @@ const idbJS = `
         resolve(db);
       };
       request.onupgradeneeded = (event) => {
-        event.target.result.createObjectStore(STORE_NAME, { keyPath: 'name' });
+        const db = event.target.result;
+        db.createObjectStore(STORE_NAME, { keyPath: 'name' });
       };
     });
   }
