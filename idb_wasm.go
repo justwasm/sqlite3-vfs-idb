@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"io"
 	"log/slog"
+	"path/filepath"
 	"sync"
 	"syscall/js"
 
@@ -65,15 +66,19 @@ func (f *idbFile) call(method string, args ...any) (js.Value, error) {
 
 // Open implements the VFS interface.
 func (v *idbVFS) Open(name string, flags vfs.OpenFlag) (vfs.File, vfs.OpenFlag, error) {
+	absName, err := filepath.Abs(name)
+	if err != nil {
+		return nil, 0, sqlite3.IOERR
+	}
 	f := &idbFile{
-		name:  name,
+		name:  absName,
 		flags: flags,
 		data:  bytes.NewBuffer(nil),
 	}
 
 	// For read operations, try to load existing data from IndexedDB.
 	if flags&vfs.OPEN_READONLY != 0 || flags&vfs.OPEN_READWRITE != 0 {
-		val, err := f.call("getFile", name)
+		val, err := f.call("getFile", absName)
 		if err != nil {
 			return nil, 0, sqlite3.IOERR_READ
 		}
@@ -97,8 +102,12 @@ func (v *idbVFS) Open(name string, flags vfs.OpenFlag) (vfs.File, vfs.OpenFlag, 
 
 // Delete implements the VFS interface.
 func (v *idbVFS) Delete(name string, dirSync bool) error {
-	f := &idbFile{name: name}
-	_, err := f.call("deleteFile", name)
+	absName, err := filepath.Abs(name)
+	if err != nil {
+		return sqlite3.IOERR_DELETE
+	}
+	f := &idbFile{name: absName}
+	_, err = f.call("deleteFile", absName)
 	if err != nil {
 		return sqlite3.IOERR_DELETE
 	}
@@ -107,8 +116,12 @@ func (v *idbVFS) Delete(name string, dirSync bool) error {
 
 // Access implements the VFS interface.
 func (v *idbVFS) Access(name string, flags vfs.AccessFlag) (bool, error) {
-	f := &idbFile{name: name}
-	val, err := f.call("getFile", name)
+	absName, err := filepath.Abs(name)
+	if err != nil {
+		return false, sqlite3.IOERR_ACCESS
+	}
+	f := &idbFile{name: absName}
+	val, err := f.call("getFile", absName)
 	if err != nil {
 		// An error in JS might mean we can't access it, but let's check flags
 		if flags == vfs.ACCESS_EXISTS {
@@ -131,7 +144,7 @@ func (v *idbVFS) Access(name string, flags vfs.AccessFlag) (bool, error) {
 
 // FullPathname implements the VFS interface.
 func (v *idbVFS) FullPathname(name string) (string, error) {
-	return name, nil
+	return filepath.Abs(name)
 }
 
 // Close implements the File interface.
